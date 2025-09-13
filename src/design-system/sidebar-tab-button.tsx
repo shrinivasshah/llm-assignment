@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import type { SidebarTabType } from '@/types/sidebar';
+import type { SidebarTabType } from '@/components/sidebar/types';
 
 type SidebarTabButtonProps = {
   title: string;

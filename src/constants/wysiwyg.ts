@@ -8,7 +8,6 @@ import {
   unorderedListIcon,
 } from '@/assets/svgs/wysiwyg-icons';
 
-// Toolbar button configuration
 export const TOOLBAR_BUTTONS = [
   {
     action: 'toggleBold',
@@ -54,10 +53,11 @@ export const TOOLBAR_BUTTONS = [
   },
 ] as const;
 
-// Constants
 export const HEIGHT_VARIANTS = {
-  sm: 'h-48', // 192px
-  md: 'h-64', // 256px
-  lg: 'h-80', // 320px
-  xl: 'h-96', // 384px
+  sm: 'h-48',
+  md: 'h-64',
+  lg: 'h-80',
+  xl: 'h-96',
 } as const;
+
+export const EDITOR_PLACEHOLDER = 'Ask me anything ...';

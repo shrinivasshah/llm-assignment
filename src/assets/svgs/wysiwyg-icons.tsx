@@ -1,4 +1,3 @@
-// WYSIWYG Editor specific icons
 export const boldIcon = (
   <svg
     width='20'

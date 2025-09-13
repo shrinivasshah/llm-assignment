@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { SidebarTab } from '@/types/sidebar';
+import type { SidebarTab } from '@/components/sidebar/types';
 
 const initialTabs: SidebarTab[] = [
   { id: 'home', label: 'Home', type: 'home', path: '/' },
@@ -11,7 +11,7 @@ export const useChatTabs = () => {
   const addChatTab = useCallback((chatId: string, label?: string) => {
     const newTab: SidebarTab = {
       id: `chat-${chatId}`,
-      label: label || `Chat ${chatId.slice(0, 8)}...`,
+      label: label || 'Untitled Chat',
       type: 'chat',
       path: `/${chatId}`,
     };
@@ -31,6 +31,14 @@ export const useChatTabs = () => {
     setTabs(prevTabs => prevTabs.filter(tab => tab.id !== `chat-${chatId}`));
   }, []);
 
+  const updateChatTabLabel = useCallback((chatId: string, newLabel: string) => {
+    setTabs(prevTabs =>
+      prevTabs.map(tab =>
+        tab.id === `chat-${chatId}` ? { ...tab, label: newLabel } : tab
+      )
+    );
+  }, []);
+
   const getChatTab = useCallback(
     (chatId: string) => {
       return tabs.find(tab => tab.path === `/${chatId}`);
@@ -43,5 +51,6 @@ export const useChatTabs = () => {
     addChatTab,
     removeChatTab,
     getChatTab,
+    updateChatTabLabel,
   };
 };

@@ -3,7 +3,6 @@ import SidebarTabs from './tabs';
 import SidebarFooter from './footer';
 import { useLocation, useNavigate } from 'react-router';
 import { useChatTabsContext } from '@/context/chat-tabs-context';
-import { useNavigateToNewChat } from '@/hooks/useNavigateToNewChat';
 
 type SidebarProps = {};
 
@@ -16,7 +15,7 @@ const Sidebar = (_props: SidebarProps) => {
     if (location.pathname === '/') {
       return 'home';
     }
-    // For chat routes, find the tab that matches the current path
+
     const activeTab = tabs.find(tab => tab.path === location.pathname);
     return activeTab?.id || 'home';
   };

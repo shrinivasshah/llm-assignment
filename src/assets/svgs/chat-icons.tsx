@@ -1,4 +1,3 @@
-// Chat specific icons
 export const sendIcon = (
   <svg
     width='16'

@@ -1,12 +1,13 @@
 import React, { createContext, useContext } from 'react';
 import { useChatTabs } from '@/hooks/useChatTabs';
-import type { SidebarTab } from '@/types/sidebar';
+import type { SidebarTab } from '@/components/sidebar/types';
 
 type ChatTabsContextType = {
   tabs: SidebarTab[];
   addChatTab: (chatId: string, label?: string) => string;
   removeChatTab: (chatId: string) => void;
   getChatTab: (chatId: string) => SidebarTab | undefined;
+  updateChatTabLabel: (chatId: string, newLabel: string) => void;
 };
 
 const ChatTabsContext = createContext<ChatTabsContextType | undefined>(

@@ -11,6 +11,8 @@ import { client } from '@/utils/openai';
 import { SYSTEM_PROMPT } from '@/constants/openai';
 import { EChatUserType } from './enums';
 import { generateUser } from '@/helpers/openai';
+import { extractChatTitle } from '@/helpers/chat';
+import { useChatTabsContext } from './chat-tabs-context';
 import {
   addConversation,
   setCurrentMessage,
@@ -35,8 +37,9 @@ const initialState: ChatState = {
   editingMessageId: null,
 };
 
-export const ChatProvider = ({ children }: ChatProviderProps) => {
+export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
   const [state, dispatch] = useReducer(chatReducer, initialState);
+  const { updateChatTabLabel } = useChatTabsContext();
 
   const generateId = useCallback((): string => {
     return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -187,6 +190,13 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
       dispatch(setError(null));
 
       try {
+        // Check if this is the first message and update tab title
+        const isFirstMessage = state.conversations.length === 0;
+        if (isFirstMessage && chatId) {
+          const chatTitle = extractChatTitle(trimmedContent);
+          updateChatTabLabel(chatId, chatTitle);
+        }
+
         // Create a new conversation ID
         const conversationId = generateId();
 
@@ -281,7 +291,13 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         dispatch(setLoading(false));
       }
     },
-    [handleClearCurrentMessage, generateId, state.conversations]
+    [
+      handleClearCurrentMessage,
+      generateId,
+      state.conversations,
+      chatId,
+      updateChatTabLabel,
+    ]
   );
 
   const handleSetEditingMessageId = useCallback((id: string | null) => {

@@ -18,8 +18,12 @@ const ChatPage = () => {
     }
   }, [id, addChatTab, getChatTab]);
 
+  if (!id) {
+    return <div>Invalid chat ID</div>;
+  }
+
   return (
-    <ChatProvider>
+    <ChatProvider chatId={id}>
       <Chat />
     </ChatProvider>
   );

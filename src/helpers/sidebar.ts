@@ -1,4 +1,4 @@
-import type { SidebarTab, SidebarTabType } from '@/types/sidebar';
+import type { SidebarTab, SidebarTabType } from '@/components/sidebar/types';
 
 export type SidebarItem = {
   id: string;

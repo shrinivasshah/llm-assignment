@@ -1,6 +1,4 @@
-type ChatEmptyStateProps = {
-  // No props needed for this component
-};
+type ChatEmptyStateProps = {};
 
 const ChatEmptyState = (_props: ChatEmptyStateProps) => (
   <div className='w-full flex items-center justify-center h-full text-gray-500'>

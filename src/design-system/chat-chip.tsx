@@ -34,7 +34,6 @@ const ChatChip = ({ fileName, onRemove, className = '' }: ChatChipProps) => {
         </span>
       </div>
 
-      {/* Remove button */}
       {onRemove && (
         <button
           onClick={onRemove}

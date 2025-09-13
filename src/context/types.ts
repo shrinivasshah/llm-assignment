@@ -39,6 +39,7 @@ export type ChatContextType = {
 
 export type ChatProviderProps = {
   children: ReactNode;
+  chatId?: string;
 };
 
 export type ChatAction =

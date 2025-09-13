@@ -40,7 +40,6 @@ const TiptapContainer = (_props: TiptapContainerProps) => {
       ref={editorRef}
       value={currentMessage}
       onChange={handleSetCurrentMessage}
-      placeholder='Ask me anything...'
       handleSend={handleSend}
     />
   );

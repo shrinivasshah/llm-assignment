@@ -1,6 +1,5 @@
 import {
   useEffect,
-  useMemo,
   useCallback,
   useRef,
   useState,
@@ -8,23 +7,15 @@ import {
   useImperativeHandle,
 } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Image from '@tiptap/extension-image';
-import Link from '@tiptap/extension-link';
-import TextAlign from '@tiptap/extension-text-align';
-import Underline from '@tiptap/extension-underline';
-import Placeholder from '@tiptap/extension-placeholder';
-import { Emoji } from '@tiptap/extension-emoji';
 import classNames from 'classnames';
 import { pictureIcon, downArrowIcon } from '@/assets/svgs/wysiwyg-icons';
 import { TOOLBAR_BUTTONS } from '@/constants/wysiwyg';
 import './tiptap-editor.css';
-import { setEmojis } from '@/helpers/wysiwyg';
+import { getTiptapExtensions } from '@/helpers/tiptap-extensions';
 import ChatAttachButton from '@/design-system/chat-attach-button';
 import ChatSendButton from '@/design-system/chat-send-button';
 import ChatChip from '@/design-system/chat-chip';
 
-// Types
 type WysiwygEditorRef = {
   focus: () => void;
 };
@@ -34,7 +25,6 @@ type WysiwygEditorProps = {
   onChange?: (content: string) => void;
   handleSend?: (e: React.FormEvent<HTMLFormElement>) => void;
   handleAttach?: () => void;
-  placeholder?: string;
   readOnly?: boolean;
   className?: string;
   autoFocus?: boolean;
@@ -67,7 +57,6 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(
       onChange,
       handleSend,
       handleAttach,
-      placeholder = 'Ask me anything ...',
       readOnly = false,
       className = '',
       autoFocus = false,
@@ -78,39 +67,8 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
 
-    const extensions = useMemo(
-      () => [
-        StarterKit,
-        Underline,
-        Placeholder.configure({
-          placeholder,
-        }),
-        Emoji.configure({
-          enableEmoticons: true,
-          suggestion: {
-            items: setEmojis,
-          },
-        }),
-        Image.configure({
-          HTMLAttributes: {
-            class: 'editor-image',
-          },
-        }),
-        Link.configure({
-          openOnClick: false,
-          HTMLAttributes: {
-            class: 'editor-link',
-          },
-        }),
-        TextAlign.configure({
-          types: ['heading', 'paragraph'],
-        }),
-      ],
-      [placeholder]
-    );
-
     const editor = useEditor({
-      extensions,
+      extensions: getTiptapExtensions(),
       content: value,
       editable: !readOnly,
       onUpdate: ({ editor }) => {
