@@ -1,18 +1,36 @@
 import './App.css';
-import { Routes, Route } from 'react-router';
-import Home from './pages/home';
-import Chat from './pages/chat';
+import { Outlet, useLocation } from 'react-router';
+import { useEffect, useRef } from 'react';
 import { ChatTabsProvider } from '@/context/chat-tabs-context';
 import Layout from './layout/layout';
 
 function App() {
+  const location = useLocation();
+  const previousLocationRef = useRef(location.pathname);
+
+  const handleRouteChange = () => {
+    window.dispatchEvent(
+      new CustomEvent('navigation-save-trigger', {
+        detail: {
+          from: previousLocationRef.current,
+          to: location.pathname,
+        },
+      })
+    );
+
+    previousLocationRef.current = location.pathname;
+  };
+
+  useEffect(() => {
+    if (previousLocationRef.current !== location.pathname) {
+      handleRouteChange();
+    }
+  }, [location.pathname]);
+
   return (
     <ChatTabsProvider>
       <Layout>
-        <Routes>
-          <Route path='/' element={<Home />} />
-          <Route path='/:id' element={<Chat />} />
-        </Routes>
+        <Outlet />
       </Layout>
     </ChatTabsProvider>
   );

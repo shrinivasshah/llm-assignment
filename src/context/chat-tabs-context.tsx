@@ -8,6 +8,7 @@ type ChatTabsContextType = {
   removeChatTab: (chatId: string) => void;
   getChatTab: (chatId: string) => SidebarTab | undefined;
   updateChatTabLabel: (chatId: string, newLabel: string) => void;
+  isLoaded: boolean;
 };
 
 const ChatTabsContext = createContext<ChatTabsContextType | undefined>(

@@ -3,7 +3,7 @@ type UserIconProps = {
 };
 
 const UserIcon = ({ initial = 'U' }: UserIconProps) => (
-  <div className='flex-shrink-0 w-2 h-2 rounded-full flex items-center justify-center text-white font-semibold bg-primary-gradient text-xs'>
+  <div className='flex-shrink-0 w-2 h-2 rounded-full flex items-center justify-center text-white font-semibold bg-primary-gradient text-xxs sm:text-xs'>
     {initial}
   </div>
 );

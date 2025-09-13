@@ -50,9 +50,12 @@ const Chatbox = ({ conversations = [] }: ChatboxComponentProps) => {
     <div
       ref={chatboxRef}
       className={classNames(
-        'flex-1 h-full w-full rounded-lg overflow-y-auto overflow-x-hidden p-4 space-y-4 scroll-smooth',
+        'flex-1 h-full w-full rounded-lg overflow-hidden p-0.5 sm:p-0.8 md:p-4 space-y-4 scroll-smooth min-w-0',
+        'overflow-y-auto overflow-x-hidden',
+        'scrollbar-thin scrollbar-thumb-blue-25 scrollbar-track-transparent',
         {
-          'bg-white': messages.length > 0 || isLoading || isStreaming,
+          'lg:bg-white lg:backdrop-blur-none backdrop-blur-md bg-white/20':
+            messages.length > 0 || isLoading || isStreaming,
           'backdrop-blur-md bg-white/20':
             messages.length === 0 && !isLoading && !isStreaming,
         }

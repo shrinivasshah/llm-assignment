@@ -1,29 +1,27 @@
 import { useEffect } from 'react';
-import { useParams } from 'react-router';
+import { useLoaderData } from 'react-router';
 import Chat from '@/components/chat/chat';
 import { ChatProvider } from '@/context/chat-context';
 import { useChatTabsContext } from '@/context/chat-tabs-context';
+import type { ChatLoaderData } from '@/loaders/chatLoader';
 
 const ChatPage = () => {
-  const { id } = useParams<{ id: string }>();
+  const { chatId, storedChat } = useLoaderData() as ChatLoaderData;
   const { addChatTab, getChatTab } = useChatTabsContext();
 
   useEffect(() => {
-    if (id) {
-      // Check if tab already exists, if not create it
-      const existingTab = getChatTab(id);
-      if (!existingTab) {
-        addChatTab(id);
+    const existingTab = getChatTab(chatId);
+    if (!existingTab) {
+      if (storedChat && storedChat.title && storedChat.title !== 'New Chat') {
+        addChatTab(chatId, storedChat.title);
+      } else {
+        addChatTab(chatId);
       }
     }
-  }, [id, addChatTab, getChatTab]);
-
-  if (!id) {
-    return <div>Invalid chat ID</div>;
-  }
+  }, [chatId, storedChat, addChatTab, getChatTab]);
 
   return (
-    <ChatProvider chatId={id}>
+    <ChatProvider chatId={chatId}>
       <Chat />
     </ChatProvider>
   );

@@ -36,6 +36,7 @@ export type ChatContextType = {
   handleSetEditingMessageId: (id: string | null) => void;
   handleUpdateEditingMessage: (id: string, content: string) => void;
   handleCancelStreaming: () => void;
+  saveConversationsToStorage: () => Promise<void>;
 };
 
 export type ChatProviderProps = {

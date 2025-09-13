@@ -13,12 +13,20 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
   return (
     <div
       className={classNames(
-        'flex items-start',
-        isUser ? 'flex-row-reverse space-x-reverse gap-1' : 'flex-row gap-1'
+        'flex items-start min-w-0 max-w-full',
+        isUser
+          ? 'flex-row-reverse space-x-reverse gap-1 sm:gap-2 justify-start'
+          : 'flex-row gap-1 sm:gap-2'
       )}
     >
       {isUser ? <UserIcon initial='U' /> : <UserIcon initial='T' />}
-      <MessageContent message={message} />
+      {isUser ? (
+        <MessageContent message={message} />
+      ) : (
+        <div className='min-w-0 flex-1'>
+          <MessageContent message={message} />
+        </div>
+      )}
     </div>
   );
 };

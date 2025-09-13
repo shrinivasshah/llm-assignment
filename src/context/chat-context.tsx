@@ -19,6 +19,7 @@ import { SYSTEM_PROMPT } from '@/constants/openai';
 import { EChatUserType } from './enums';
 import { generateUser } from '@/helpers/openai';
 import { extractChatTitle } from '@/helpers/chat';
+import { sanitizeHtmlForLLM } from '@/utils/sanitize';
 import { useChatTabsContext } from './chat-tabs-context';
 import { chatStorage } from '@/utils/indexeddb';
 import {
@@ -48,12 +49,42 @@ const initialState: ChatState = {
 
 export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
   const [state, dispatch] = useReducer(chatReducer, initialState);
-  const { updateChatTabLabel } = useChatTabsContext();
+  const { updateChatTabLabel, getChatTab } = useChatTabsContext();
 
-  // AbortController to cancel streaming requests
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Initialize IndexedDB and load chat data
+  const saveConversationsToStorage = useCallback(async () => {
+    if (
+      !chatId ||
+      state.conversations.length === 0 ||
+      !chatStorage.isSupported()
+    ) {
+      return;
+    }
+
+    try {
+      const chatTitle = state.conversations[0]?.user?.content
+        ? extractChatTitle(
+            sanitizeHtmlForLLM(state.conversations[0].user.content)
+          )
+        : 'New Chat';
+
+      await chatStorage.saveChat(chatId, chatTitle, state.conversations);
+
+      // Only update tab label if it's currently "Untitled Chat" or "New Chat"
+      const currentTab = getChatTab(chatId);
+      if (
+        currentTab &&
+        (currentTab.label === 'Untitled Chat' ||
+          currentTab.label === 'New Chat')
+      ) {
+        updateChatTabLabel(chatId, chatTitle);
+      }
+    } catch (error) {
+      console.error('Failed to save chat to IndexedDB:', error);
+    }
+  }, [chatId, state.conversations, updateChatTabLabel, getChatTab]);
+
   useEffect(() => {
     const initializeStorage = async () => {
       try {
@@ -65,9 +96,75 @@ export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
         await chatStorage.init();
 
         if (chatId) {
-          const storedChat = await chatStorage.loadChat(chatId);
+          let storedChat = await chatStorage.loadChat(chatId);
+
+          if (!storedChat) {
+            const backupKey = `chat_backup_${chatId}`;
+            const backup = localStorage.getItem(backupKey);
+            if (backup) {
+              try {
+                const backupData = JSON.parse(backup);
+                // Convert the backup data to the expected format
+                const backupChat = {
+                  ...backupData,
+                  createdAt: new Date(
+                    backupData.createdAt || backupData.updatedAt
+                  ),
+                  updatedAt: new Date(backupData.updatedAt),
+                  conversations: backupData.conversations.map((conv: any) => ({
+                    ...conv,
+                    timestamp: new Date(conv.timestamp),
+                    user: conv.user
+                      ? {
+                          ...conv.user,
+                          timestamp: new Date(conv.user.timestamp),
+                        }
+                      : undefined,
+                    system: conv.system
+                      ? {
+                          ...conv.system,
+                          timestamp: new Date(conv.system.timestamp),
+                        }
+                      : undefined,
+                  })),
+                };
+
+                await chatStorage.saveChat(
+                  chatId,
+                  backupData.title,
+                  backupChat.conversations
+                );
+                localStorage.removeItem(backupKey);
+                storedChat = backupChat;
+                console.log('Recovered chat from localStorage backup');
+              } catch (error) {
+                console.error('Failed to parse localStorage backup:', error);
+                localStorage.removeItem(backupKey);
+              }
+            }
+          }
+
           if (storedChat) {
             dispatch(setConversations(storedChat.conversations));
+
+            // Update tab title only if it's currently a generic title
+            if (storedChat.conversations.length > 0) {
+              const currentTab = getChatTab(chatId);
+              if (
+                currentTab &&
+                (currentTab.label === 'Untitled Chat' ||
+                  currentTab.label === 'New Chat')
+              ) {
+                const firstUserMessage =
+                  storedChat.conversations[0]?.user?.content;
+                if (firstUserMessage) {
+                  const chatTitle = extractChatTitle(
+                    sanitizeHtmlForLLM(firstUserMessage)
+                  );
+                  updateChatTabLabel(chatId, chatTitle);
+                }
+              }
+            }
           }
         }
       } catch (error) {
@@ -79,33 +176,90 @@ export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
     initializeStorage();
   }, [chatId]);
 
-  // Save conversations to IndexedDB whenever they change
+  // Save conversations to storage with debouncing
   useEffect(() => {
-    const saveConversations = async () => {
+    if (chatId && state.conversations.length > 0) {
+      const timeoutId = setTimeout(() => {
+        saveConversationsToStorage().catch(console.error);
+      }, 2000); // Debounce for 2 seconds
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [chatId, state.conversations, saveConversationsToStorage]);
+
+  // Update tab title when conversations change and title can be extracted (only for new or generic titles)
+  useEffect(() => {
+    if (chatId && state.conversations.length > 0) {
+      const currentTab = getChatTab(chatId);
       if (
-        !chatId ||
-        state.conversations.length === 0 ||
-        !chatStorage.isSupported()
+        currentTab &&
+        (currentTab.label === 'Untitled Chat' ||
+          currentTab.label === 'New Chat')
       ) {
-        return;
+        const firstUserMessage = state.conversations[0]?.user?.content;
+        if (firstUserMessage) {
+          const chatTitle = extractChatTitle(
+            sanitizeHtmlForLLM(firstUserMessage)
+          );
+          updateChatTabLabel(chatId, chatTitle);
+        }
       }
+    }
+  }, [chatId, state.conversations, updateChatTabLabel, getChatTab]);
 
-      try {
-        // Get chat title from first conversation or use default
-        const chatTitle = state.conversations[0]?.user?.content
-          ? extractChatTitle(state.conversations[0].user.content)
-          : 'New Chat';
+  // Add beforeunload event listener to save data before page unload
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // Use synchronous save for beforeunload to ensure it completes
+      if (
+        chatId &&
+        state.conversations.length > 0 &&
+        chatStorage.isSupported()
+      ) {
+        try {
+          const chatTitle = state.conversations[0]?.user?.content
+            ? extractChatTitle(
+                sanitizeHtmlForLLM(state.conversations[0].user.content)
+              )
+            : 'New Chat';
 
-        await chatStorage.saveChat(chatId, chatTitle, state.conversations);
-      } catch (error) {
-        console.error('Failed to save chat to IndexedDB:', error);
+          // Save synchronously using localStorage as fallback for beforeunload
+          localStorage.setItem(
+            `chat_backup_${chatId}`,
+            JSON.stringify({
+              id: chatId,
+              title: chatTitle,
+              conversations: state.conversations,
+              updatedAt: new Date().toISOString(),
+            })
+          );
+
+          // Also attempt async save (may or may not complete)
+          saveConversationsToStorage().catch(console.error);
+        } catch (error) {
+          console.error('Failed to save chat during beforeunload:', error);
+        }
       }
     };
 
-    // Debounce saves to avoid excessive writes during streaming
-    const timeoutId = setTimeout(saveConversations, 1000);
-    return () => clearTimeout(timeoutId);
-  }, [chatId, state.conversations]);
+    // Handle navigation-triggered saves
+    const handleNavigationSave = () => {
+      if (chatId && state.conversations.length > 0) {
+        saveConversationsToStorage().catch(console.error);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('navigation-save-trigger', handleNavigationSave);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener(
+        'navigation-save-trigger',
+        handleNavigationSave
+      );
+    };
+  }, [chatId, state.conversations, saveConversationsToStorage]);
 
   const generateId = useCallback((): string => {
     return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -165,7 +319,7 @@ export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
           if (conversation.user?.content) {
             messages.push({
               role: EChatUserType.USER,
-              content: conversation.user.content,
+              content: sanitizeHtmlForLLM(conversation.user.content),
             });
           }
           // Only add LLM responses from conversations before the target
@@ -282,8 +436,18 @@ export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
 
         const isFirstMessage = state.conversations.length === 0;
         if (isFirstMessage && chatId) {
-          const chatTitle = extractChatTitle(trimmedContent);
-          updateChatTabLabel(chatId, chatTitle);
+          const chatTitle = extractChatTitle(
+            sanitizeHtmlForLLM(trimmedContent)
+          );
+          // Only update if the current tab has a generic title
+          const currentTab = getChatTab(chatId);
+          if (
+            currentTab &&
+            (currentTab.label === 'Untitled Chat' ||
+              currentTab.label === 'New Chat')
+          ) {
+            updateChatTabLabel(chatId, chatTitle);
+          }
         }
 
         const conversationId = generateId();
@@ -329,7 +493,7 @@ export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
           if (conversation.user?.content) {
             messages.push({
               role: EChatUserType.USER,
-              content: conversation.user.content,
+              content: sanitizeHtmlForLLM(conversation.user.content),
             });
           }
           if (conversation.system?.content) {
@@ -340,7 +504,10 @@ export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
           }
         });
 
-        messages.push({ role: EChatUserType.USER, content: trimmedContent });
+        messages.push({
+          role: EChatUserType.USER,
+          content: sanitizeHtmlForLLM(trimmedContent),
+        });
 
         const stream = await client.chat.completions.create(
           {
@@ -394,6 +561,7 @@ export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
       state.conversations,
       chatId,
       updateChatTabLabel,
+      getChatTab,
     ]
   );
 
@@ -429,6 +597,7 @@ export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
     handleSetEditingMessageId,
     handleUpdateEditingMessage,
     handleCancelStreaming,
+    saveConversationsToStorage,
   };
 
   return (

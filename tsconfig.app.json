@@ -26,7 +26,8 @@
       "@types/*": ["./src/types/*"],
       "@hooks/*": ["./src/hooks/*"],
       "@enums/*": ["./src/enums/*"],
-      "@layout/*": ["./src/layout/*"]
+      "@layout/*": ["./src/layout/*"],
+      "@loaders/*": ["./src/loaders/*"]
     },
 
     /* Linting */

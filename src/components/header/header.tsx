@@ -1,17 +1,25 @@
+import HeaderMenuButton from '@/design-system/header-menu-button';
+import useScreenSize from '@/hooks/useScreenSize';
+import { useSidenavContext } from '@/context/sidenav-context';
+
 type HeaderProps = {};
 
 const Header = (_props: HeaderProps) => {
+  const { isTablet, isMobile } = useScreenSize();
+  const { toggleSidenav } = useSidenavContext();
+
   return (
-    <header className='h-4 w-full flex items-center justify-between gap-1.2'>
-      <div className='basis-[20%]'>
+    <header className='lg:h-4 h-6 w-full flex items-center justify-between gap-1.2'>
+      <div className='lg:basis-[20%] flex items-center gap-1'>
+        {(isTablet || isMobile) && <HeaderMenuButton onClick={toggleSidenav} />}
         <img
-          className='w-[195.67px] h-[33.13px] pb-1'
+          className='lg:w-[195.67px] lg:h-[33.13px] w-[15rem] lg:pb-1'
           fetchPriority='high'
           src='/assets/brand-logo.avif'
           alt='Brand Logo'
         />
       </div>
-      <h1 className='text-base text-white font-medium basis-[80%]'>
+      <h1 className='text-base text-white font-medium lg:basis-[80%]'>
         Tracker Chat
       </h1>
     </header>

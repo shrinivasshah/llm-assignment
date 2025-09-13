@@ -4,8 +4,33 @@
   display: flex;
   flex-direction: column;
   min-height: 9.2rem;
-  max-height: 35vh;
+  max-height: 25vh;
   overflow: hidden;
+}
+
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  /* Firefox */
+  scrollbar-width: none;
+  /* Safari and Chrome */
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Responsive max-height adjustments */
+@media (min-width: 640px) {
+  .tiptap-content {
+    max-height: 30vh;
+  }
+}
+
+@media (min-width: 768px) {
+  .tiptap-content {
+    max-height: 35vh;
+  }
 }
 
 .tiptap-content .ProseMirror {
@@ -15,8 +40,34 @@
   height: 100%;
   flex: 1;
   min-height: 9.2rem;
-  max-height: calc(35vh - 6rem);
+  max-height: calc(25vh - 6rem);
   overflow-y: auto;
+}
+
+/* Responsive max-height adjustments for ProseMirror */
+@media (min-width: 640px) {
+  .tiptap-content .ProseMirror {
+    max-height: calc(30vh - 6rem);
+  }
+}
+
+@media (min-width: 768px) {
+  .tiptap-content .ProseMirror {
+    max-height: calc(35vh - 6rem);
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 639px) {
+  .tiptap-content .ProseMirror {
+    padding: 12px;
+    font-size: 14px;
+    min-height: 8rem;
+  }
+
+  .tiptap-content {
+    min-height: 8rem;
+  }
 }
 
 /* Placeholder styling for Tiptap Placeholder extension */

@@ -1,26 +1,36 @@
 import type { ConversationPair } from '@/context/types';
 
 const DB_NAME = 'MerkleChatDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const CHAT_STORE_NAME = 'chats';
 const CHAT_MESSAGES_STORE_NAME = 'chatMessages';
+const TABS_STORE_NAME = 'tabs';
 
-export interface StoredChat {
+export type StoredChat = {
   id: string;
   title: string;
   createdAt: Date;
   updatedAt: Date;
   conversations: ConversationPair[];
-}
+};
 
-export interface ChatMessage {
+export type StoredTab = {
+  id: string;
+  label: string;
+  type: 'home' | 'chat';
+  path: string;
+  order: number;
+  isActive?: boolean;
+};
+
+export type ChatMessage = {
   chatId: string;
   conversationId: string;
   messageId: string;
   content: string;
   sender: string;
   timestamp: Date;
-}
+};
 
 class IndexedDBManager {
   private db: IDBDatabase | null = null;
@@ -58,6 +68,13 @@ class IndexedDBManager {
             unique: false,
           });
         }
+
+        if (!db.objectStoreNames.contains(TABS_STORE_NAME)) {
+          const tabsStore = db.createObjectStore(TABS_STORE_NAME, {
+            keyPath: 'id',
+          });
+          tabsStore.createIndex('order', 'order', { unique: false });
+        }
       };
     });
   }
@@ -88,7 +105,6 @@ class IndexedDBManager {
           reject(new Error(request.error?.message || 'Failed to save chat'));
       });
 
-      // Save individual messages for faster querying
       const messageStore = transaction.objectStore(CHAT_MESSAGES_STORE_NAME);
       for (const conversation of chat.conversations) {
         if (conversation.user) {
@@ -225,7 +241,6 @@ class IndexedDBManager {
           reject(new Error(request.error?.message || 'Failed to delete chat'));
       });
 
-      // Delete all messages for this chat
       const messageStore = transaction.objectStore(CHAT_MESSAGES_STORE_NAME);
       const index = messageStore.index('chatId');
       const range = IDBKeyRange.only(chatId);
@@ -287,12 +302,13 @@ class IndexedDBManager {
   async clearAllData(): Promise<void> {
     const db = await this.ensureDB();
     const transaction = db.transaction(
-      [CHAT_STORE_NAME, CHAT_MESSAGES_STORE_NAME],
+      [CHAT_STORE_NAME, CHAT_MESSAGES_STORE_NAME, TABS_STORE_NAME],
       'readwrite'
     );
 
     const chatStore = transaction.objectStore(CHAT_STORE_NAME);
     const messageStore = transaction.objectStore(CHAT_MESSAGES_STORE_NAME);
+    const tabsStore = transaction.objectStore(TABS_STORE_NAME);
 
     await Promise.all([
       new Promise<void>((resolve, reject) => {
@@ -309,24 +325,76 @@ class IndexedDBManager {
             new Error(request.error?.message || 'Failed to clear messages')
           );
       }),
+      new Promise<void>((resolve, reject) => {
+        const request = tabsStore.clear();
+        request.onsuccess = () => resolve();
+        request.onerror = () =>
+          reject(new Error(request.error?.message || 'Failed to clear tabs'));
+      }),
     ]);
   }
 
-  // Check if IndexedDB is supported
+  // Tab management methods
+  async saveTabs(tabs: StoredTab[]): Promise<void> {
+    const db = await this.ensureDB();
+    const transaction = db.transaction([TABS_STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(TABS_STORE_NAME);
+
+    // Clear existing tabs first
+    await new Promise<void>((resolve, reject) => {
+      const clearRequest = store.clear();
+      clearRequest.onsuccess = () => resolve();
+      clearRequest.onerror = () =>
+        reject(
+          new Error(clearRequest.error?.message || 'Failed to clear tabs')
+        );
+    });
+
+    // Save new tabs
+    for (const tab of tabs) {
+      await new Promise<void>((resolve, reject) => {
+        const request = store.put(tab);
+        request.onsuccess = () => resolve();
+        request.onerror = () =>
+          reject(new Error(request.error?.message || 'Failed to save tab'));
+      });
+    }
+
+    await new Promise<void>((resolve, reject) => {
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () =>
+        reject(new Error(transaction.error?.message || 'Transaction failed'));
+    });
+  }
+
+  async loadTabs(): Promise<StoredTab[]> {
+    const db = await this.ensureDB();
+    const transaction = db.transaction([TABS_STORE_NAME], 'readonly');
+    const store = transaction.objectStore(TABS_STORE_NAME);
+    const index = store.index('order');
+
+    return new Promise((resolve, reject) => {
+      const request = index.getAll();
+      request.onsuccess = () => {
+        const tabs = request.result as StoredTab[];
+        tabs.sort((a, b) => a.order - b.order);
+        resolve(tabs);
+      };
+      request.onerror = () =>
+        reject(new Error(request.error?.message || 'Failed to load tabs'));
+    });
+  }
+
   static isSupported(): boolean {
     return typeof indexedDB !== 'undefined';
   }
 }
 
-// Create singleton instance
 export const indexedDBManager = new IndexedDBManager();
 
-// Utility functions for easier usage
 export const chatStorage = {
-  // Initialize the database
   init: () => indexedDBManager.init(),
 
-  // Save chat conversations for a specific chat ID
   saveChat: async (
     chatId: string,
     title: string,
@@ -346,22 +414,21 @@ export const chatStorage = {
     await indexedDBManager.saveChat(chat);
   },
 
-  // Load conversations for a specific chat ID
   loadChat: (chatId: string) => indexedDBManager.loadChat(chatId),
 
-  // Load all chats
   loadAllChats: () => indexedDBManager.loadAllChats(),
 
-  // Delete a chat
   deleteChat: (chatId: string) => indexedDBManager.deleteChat(chatId),
 
-  // Update a single conversation within a chat
   updateConversation: (chatId: string, conversation: ConversationPair) =>
     indexedDBManager.updateConversation(chatId, conversation),
 
-  // Clear all stored data
   clearAll: () => indexedDBManager.clearAllData(),
 
-  // Check if storage is available
+  // Tab persistence methods
+  saveTabs: (tabs: StoredTab[]) => indexedDBManager.saveTabs(tabs),
+
+  loadTabs: () => indexedDBManager.loadTabs(),
+
   isSupported: () => IndexedDBManager.isSupported(),
 };

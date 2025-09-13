@@ -7,7 +7,6 @@ import type { Message } from '@/context/types';
 import { editIcon } from '@/assets/svgs/chat-icons';
 import ChatContext from '@/context/chat-context';
 import { useContext } from 'react';
-
 type MessageContentProps = {
   message: Message;
 };
@@ -32,12 +31,12 @@ const MessageContent = ({ message }: MessageContentProps) => {
       className={classNames(
         'text-gray-900',
         isUser && [
-          'flex flex-col items-start p-2 gap-5',
-          'min-w-20 min-h-[6.9rem]',
+          'flex flex-col items-start p-1.5 sm:p-2 gap-3 sm:gap-5',
           'bg-blue-25',
           'rounded-[2rem_0_2rem_2rem]',
-          'flex-none order-1 flex-grow-0',
-          'text-sm',
+          'inline-block max-w-[80%] w-auto',
+          'text-xs sm:text-sm',
+          'text-blue-700 italic',
         ],
         isUser &&
           editingMessageId &&
@@ -45,7 +44,7 @@ const MessageContent = ({ message }: MessageContentProps) => {
       )}
     >
       {message.sender === EChatUserType.SYSTEM ? (
-        <div className='prose prose-lg max-w-none overflow-hidden'>
+        <div className='prose prose-sm sm:prose-lg max-w-none overflow-hidden break-words'>
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={markdownComponents}
@@ -55,13 +54,16 @@ const MessageContent = ({ message }: MessageContentProps) => {
         </div>
       ) : (
         <div className='flex flex-col gap-2'>
-          <p className='whitespace-pre-wrap'>
+          <div className='whitespace-pre-wrap'>
             {!editingMessageId ? (
-              message.content
+              <div dangerouslySetInnerHTML={{ __html: message.content }} />
             ) : (
-              <span className='text-gray-500'>{message.content}</span>
+              <span
+                className='text-gray-500'
+                dangerouslySetInnerHTML={{ __html: message.content }}
+              />
             )}
-          </p>
+          </div>
           <button
             type='button'
             className={classNames({

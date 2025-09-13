@@ -1,4 +1,4 @@
-import { SidebarToggleIcon } from '@/assets/svgs';
+import { sidebarToggleIcon } from '@/assets/svgs';
 import classNames from 'classnames';
 
 type SidebarBackButtonProps = {
@@ -20,7 +20,7 @@ const SidebarBackButton = ({
       aria-label='Toggle Sidebar'
       onClick={onClick}
     >
-      <SidebarToggleIcon />
+      {sidebarToggleIcon}
     </button>
   );
 };

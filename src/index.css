@@ -21,6 +21,39 @@
   }
 }
 
+@layer utilities {
+  /* Custom scrollbar utilities */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #eff6ff transparent;
+    /* thumb track for Firefox */
+  }
+
+  .scrollbar-thumb-blue-25::-webkit-scrollbar-thumb {
+    background-color: #eff6ff;
+    /* blue-25 color */
+    border-radius: 6px;
+  }
+
+  .scrollbar-track-transparent::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: #eff6ff;
+    /* blue-25 color */
+    border-radius: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
 :root {
   font-size: 62.5%;
 }

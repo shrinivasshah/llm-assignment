@@ -38,7 +38,7 @@ type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
 const getButtonClasses = (isActive: boolean) =>
   classNames(
     'flex items-center justify-center border rounded cursor-pointer transition-all duration-200',
-    'w-[2.8rem] h-[2.8rem]',
+    'w-2 h-2 md:w-[2.8rem] md:h-[2.8rem]',
     'hover:bg-gray-100 hover:border-gray-300 focus:outline-none focus:ring-1 focus:ring-custom-blue/20',
     {
       'bg-blue-50 text-custom-blue border-custom-blue': isActive,
@@ -78,8 +78,8 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(
       content: value,
       editable: !readOnly,
       onUpdate: ({ editor }) => {
-        const text = editor.getText();
-        onChange?.(text);
+        const html = editor.getHTML();
+        onChange?.(html);
       },
       editorProps: {
         handleKeyDown: (view, event) => {
@@ -234,10 +234,12 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(
 
         <div
           className={classNames(
-            'flex flex-wrap gap-2 bg-white border-b border-gray-200 items-center'
+            'flex gap-1 md:gap-2 bg-white border-b border-gray-200 items-center',
+            'overflow-x-auto scrollbar-hide md:overflow-x-visible md:flex-wrap',
+            'min-w-0' // Prevent flex container from growing beyond parent
           )}
         >
-          <div className='relative'>
+          <div className='relative flex-shrink-0'>
             <select
               onChange={e => handleHeadingChange(e.target.value)}
               className={classNames(getSelectClasses(), 'appearance-none pr-4')}

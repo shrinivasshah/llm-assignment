@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useStoredChats } from '@/hooks/useStoredChats';
+import { useChatTabsContext } from '@/context/chat-tabs-context';
 import {
   getStorageStats,
   downloadChatData,
@@ -17,6 +18,8 @@ export const ChatStorageDemo: React.FC = () => {
     refreshChats,
     isSupported,
   } = useStoredChats();
+
+  const { removeChatTab } = useChatTabsContext();
 
   const [stats, setStats] = useState<{
     chatCount: number;
@@ -76,6 +79,7 @@ export const ChatStorageDemo: React.FC = () => {
   const handleDeleteChat = async (chatId: string) => {
     if (window.confirm('Are you sure you want to delete this chat?')) {
       await deleteChat(chatId);
+      removeChatTab(chatId);
     }
   };
 
@@ -86,6 +90,9 @@ export const ChatStorageDemo: React.FC = () => {
       )
     ) {
       await clearAllChats();
+      // Clear all chat tabs, keep only home tab
+      const chatTabs = chats.map(chat => chat.id);
+      chatTabs.forEach(chatId => removeChatTab(chatId));
     }
   };
 
