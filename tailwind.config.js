@@ -3,6 +3,25 @@ export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      typography: {
+        DEFAULT: {
+          css: {
+            'code::before': {
+              content: '&nbsp;&nbsp;',
+            },
+            'code::after': {
+              content: '&nbsp;&nbsp;',
+            },
+            code: {
+              background: '#ffeff0',
+              wordWrap: 'break-word',
+              boxDecorationBreak: 'clone',
+              padding: '.1rem .3rem .2rem',
+              borderRadius: '.2rem',
+            },
+          },
+        },
+      },
       colors: {
         primary: {
           50: '#ffffff', // Pure white
@@ -28,6 +47,19 @@ export default {
           800: '#1f2937',
           900: '#111827',
         },
+        blue: {
+          25: '#eff6ff', // Very light blue
+          50: '#dbeafe',
+          100: '#bfdbfe',
+          200: '#93c5fd',
+          300: '#60a5fa',
+          400: '#3b82f6',
+          500: '#2563eb',
+          600: '#1d4ed8', // Your specified blue
+          700: '#1e40af',
+          800: '#1e3a8a',
+          900: '#1e3a8a',
+        },
         neutral: {
           50: '#f9fafb',
           100: '#f3f4f6',
@@ -37,6 +69,8 @@ export default {
         success: '#10b981',
         warning: '#f59e0b',
         error: '#ef4444',
+        // Custom text colors
+        'custom-blue': '#1d4ed8', // Your specified blue for easy access
       },
 
       // Typography - Now with 10px base
@@ -46,24 +80,34 @@ export default {
         mono: ['JetBrains Mono', 'monospace'],
       },
       fontSize: {
-        xs: ['1.2rem', { lineHeight: '1.6rem' }],
-        sm: ['1.4rem', { lineHeight: '2rem' }],
-        base: ['1.6rem', { lineHeight: '2.4rem' }],
-        lg: ['1.8rem', { lineHeight: '2.8rem' }],
-        xl: ['2rem', { lineHeight: '2.8rem' }],
-        '2xl': ['2.4rem', { lineHeight: '3.2rem' }],
-        '3xl': ['3rem', { lineHeight: '3.6rem' }],
-        '4xl': ['3.6rem', { lineHeight: '4rem' }],
-        '5xl': ['4.8rem', { lineHeight: '1' }],
-        '6xl': ['6rem', { lineHeight: '1' }],
+        xxs: ['1rem', { lineHeight: '1.4rem' }], // 10px
+        xs: ['1.1rem', { lineHeight: '1.5rem' }], // 11px
+        sm: ['1.2rem', { lineHeight: '1.6rem' }], // 12px
+        md: ['1.3rem', { lineHeight: '1.8rem' }], // 13px
+        base: ['1.4rem', { lineHeight: '2rem' }], // 14px - common for UI
+        lg: ['1.5rem', { lineHeight: '2.2rem' }], // 15px
+        xl: ['1.6rem', { lineHeight: '2.4rem' }], // 16px
+        '2xl': ['1.8rem', { lineHeight: '2.8rem' }], // 18px
+        '3xl': ['2rem', { lineHeight: '3rem' }], // 20px
+        '4xl': ['2.4rem', { lineHeight: '3.2rem' }], // 24px
+        '5xl': ['3rem', { lineHeight: '3.6rem' }], // 30px
+        '6xl': ['3.6rem', { lineHeight: '4rem' }], // 36px
+        '7xl': ['4.8rem', { lineHeight: '1' }], // 48px
+        '8xl': ['6rem', { lineHeight: '1' }], // 60px
       },
 
       // Spacing - Now in 10px increments
       spacing: {
+        0.4: '0.4rem', // 4px
         0.5: '0.5rem', // 5px
+        0.8: '0.8rem', // 8px
         1: '1rem', // 10px
+        1.2: '1.2rem', // 12px
         1.5: '1.5rem', // 15px
+        1.6: '1.6rem', // 16px
+        1.9: '1.9rem', // 19px
         2: '2rem', // 20px
+        2.4: '2.4rem', // 24px
         2.5: '2.5rem', // 25px
         3: '3rem', // 30px
         3.5: '3.5rem', // 35px
@@ -106,12 +150,11 @@ export default {
         xl: '1.2rem', // 12px
         '2xl': '1.6rem', // 16px
         '3xl': '2.4rem', // 24px
-        full: '9999px',
       },
 
       // Background Images
       backgroundImage: {
-        'primary-gradient': 'radial-gradient(circle, #1D4ED8, #7C3AED)',
+        'primary-gradient': 'linear-gradient(to right, #1D4ED8, #7C3AED)',
       },
 
       // Shadows
@@ -119,6 +162,8 @@ export default {
         soft: '0 0.2rem 0.4rem 0 rgba(0, 0, 0, 0.05)',
         medium: '0 0.4rem 0.6rem -0.1rem rgba(0, 0, 0, 0.1)',
         hard: '0 1rem 1.5rem -0.3rem rgba(0, 0, 0, 0.1)',
+        toggle:
+          '0px 1px 2px 0px rgba(0, 0, 0, 0.06), 0px 1px 3px 0px rgba(0, 0, 0, 0.10)',
       },
 
       // Animation
@@ -139,5 +184,5 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [require('@tailwindcss/typography')],
 };

@@ -44,7 +44,7 @@ export default tseslint.config([
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        project: true,
+        project: ['./tsconfig.app.json', './tsconfig.node.json'],
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -155,6 +155,7 @@ export default tseslint.config([
           },
         },
       ],
+      'import/newline-after-import': ['error', { count: 1 }],
       'import/no-unresolved': 'error',
       'import/no-cycle': 'error',
       'import/no-unused-modules': 'warn',

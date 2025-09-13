@@ -1,5 +1,26 @@
-@import 'tailwindcss';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  #root {
+    height: 100%;
+    width: 100%;
+  }
+}
 
 :root {
-  font-size: 62.5%; /* 1rem = 10px */
+  font-size: 62.5%;
 }
