@@ -28,6 +28,9 @@ type WysiwygEditorProps = {
   readOnly?: boolean;
   className?: string;
   autoFocus?: boolean;
+  isStreaming?: boolean;
+  isLoading?: boolean;
+  handleStopStreaming?: () => void;
 };
 
 type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
@@ -60,6 +63,9 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(
       readOnly = false,
       className = '',
       autoFocus = false,
+      isStreaming = false,
+      isLoading = false,
+      handleStopStreaming,
     },
     ref
   ) => {
@@ -291,14 +297,16 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(
 
           <div className='flex justify-between'>
             <ChatAttachButton onClick={handleFileAttachment} />
-            <ChatSendButton title='Send' />
+            <ChatSendButton
+              title='Send'
+              isStreaming={isStreaming || isLoading}
+              handleStopStreaming={handleStopStreaming}
+            />
           </div>
         </div>
       </form>
     );
   }
 );
-
-WysiwygEditor.displayName = 'WysiwygEditor';
 
 export default WysiwygEditor;

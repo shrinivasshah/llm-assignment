@@ -35,6 +35,7 @@ export type ChatContextType = {
   handleClearCurrentMessage: () => void;
   handleSetEditingMessageId: (id: string | null) => void;
   handleUpdateEditingMessage: (id: string, content: string) => void;
+  handleCancelStreaming: () => void;
 };
 
 export type ChatProviderProps = {

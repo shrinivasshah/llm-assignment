@@ -1,4 +1,11 @@
-import { createContext, useContext, useReducer, useCallback } from 'react';
+import {
+  createContext,
+  useContext,
+  useReducer,
+  useCallback,
+  useEffect,
+  useRef,
+} from 'react';
 import type {
   ChatContextType,
   ChatProviderProps,
@@ -13,6 +20,7 @@ import { EChatUserType } from './enums';
 import { generateUser } from '@/helpers/openai';
 import { extractChatTitle } from '@/helpers/chat';
 import { useChatTabsContext } from './chat-tabs-context';
+import { chatStorage } from '@/utils/indexeddb';
 import {
   addConversation,
   setCurrentMessage,
@@ -24,6 +32,7 @@ import {
   clearMessages,
   setEditingMessageId,
   updateEditingMessage,
+  setConversations,
 } from './chat-actions';
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -40,6 +49,63 @@ const initialState: ChatState = {
 export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
   const [state, dispatch] = useReducer(chatReducer, initialState);
   const { updateChatTabLabel } = useChatTabsContext();
+
+  // AbortController to cancel streaming requests
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Initialize IndexedDB and load chat data
+  useEffect(() => {
+    const initializeStorage = async () => {
+      try {
+        if (!chatStorage.isSupported()) {
+          console.warn('IndexedDB not supported, chats will not persist');
+          return;
+        }
+
+        await chatStorage.init();
+
+        if (chatId) {
+          const storedChat = await chatStorage.loadChat(chatId);
+          if (storedChat) {
+            dispatch(setConversations(storedChat.conversations));
+          }
+        }
+      } catch (error) {
+        console.error('Failed to initialize chat storage:', error);
+        dispatch(setError('Failed to load chat history'));
+      }
+    };
+
+    initializeStorage();
+  }, [chatId]);
+
+  // Save conversations to IndexedDB whenever they change
+  useEffect(() => {
+    const saveConversations = async () => {
+      if (
+        !chatId ||
+        state.conversations.length === 0 ||
+        !chatStorage.isSupported()
+      ) {
+        return;
+      }
+
+      try {
+        // Get chat title from first conversation or use default
+        const chatTitle = state.conversations[0]?.user?.content
+          ? extractChatTitle(state.conversations[0].user.content)
+          : 'New Chat';
+
+        await chatStorage.saveChat(chatId, chatTitle, state.conversations);
+      } catch (error) {
+        console.error('Failed to save chat to IndexedDB:', error);
+      }
+    };
+
+    // Debounce saves to avoid excessive writes during streaming
+    const timeoutId = setTimeout(saveConversations, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [chatId, state.conversations]);
 
   const generateId = useCallback((): string => {
     return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -60,17 +126,26 @@ export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
     dispatch(setCurrentMessage(message));
   }, []);
 
-  // Isolated streaming logic function
+  const handleCancelStreaming = useCallback(() => {
+    if (abortControllerRef.current && state.isStreaming) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      dispatch(setStreaming(false));
+      dispatch(setLoading(false));
+      dispatch(setError('Response generation was cancelled'));
+    }
+  }, [state.isStreaming]);
+
   const streamLLMResponse = useCallback(
     async (conversationId: string, conversationsToUse?: ConversationPair[]) => {
       try {
+        // Create a new AbortController for this request
+        abortControllerRef.current = new AbortController();
+
         dispatch(setStreaming(true));
         dispatch(setError(null));
-
-        // Use provided conversations or current state
         const conversations = conversationsToUse || state.conversations;
 
-        // Build messages array for API call
         const messages: Array<{
           role: EChatUserType;
           content: string;
@@ -81,7 +156,6 @@ export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
           },
         ];
 
-        // Add conversation history up to and including the target conversation
         const targetIndex = conversations.findIndex(
           conv => conv.id === conversationId
         );
@@ -106,19 +180,27 @@ export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
           }
         });
 
-        const stream = await client.chat.completions.create({
-          model: 'gpt-4o',
-          stream: true,
-          messages,
-        });
+        const stream = await client.chat.completions.create(
+          {
+            model: 'gpt-4o',
+            stream: true,
+            messages,
+          },
+          {
+            signal: abortControllerRef.current.signal,
+          }
+        );
 
         let streamedContent = '';
 
-        // Reset the LLM message content before streaming
         dispatch(updateStreamingMessage(conversationId, ''));
 
-        // Process streaming response
         for await (const chunk of stream) {
+          // Check if the request was cancelled
+          if (abortControllerRef.current?.signal.aborted) {
+            break;
+          }
+
           const delta = chunk.choices[0]?.delta?.content;
           if (delta) {
             streamedContent += delta;
@@ -126,12 +208,22 @@ export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
           }
         }
 
-        dispatch(setStreaming(false));
+        // Only set streaming to false if not aborted
+        if (!abortControllerRef.current?.signal.aborted) {
+          dispatch(setStreaming(false));
+          abortControllerRef.current = null;
+        }
       } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : 'Failed to generate response';
-        dispatch(setError(errorMessage));
+        // Check if error is due to cancellation
+        if (err instanceof Error && err.name === 'AbortError') {
+          dispatch(setError('Response generation was cancelled'));
+        } else {
+          const errorMessage =
+            err instanceof Error ? err.message : 'Failed to generate response';
+          dispatch(setError(errorMessage));
+        }
         dispatch(setStreaming(false));
+        abortControllerRef.current = null;
       }
     },
     [state.conversations]
@@ -139,7 +231,6 @@ export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
 
   const handleUpdateEditingMessage = useCallback(
     (id: string, content: string) => {
-      // Find the conversation and determine which message to update
       const conversation = state.conversations.find(
         conv => conv.user?.id === id || conv.system?.id === id
       );
@@ -151,9 +242,7 @@ export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
             : EChatUserType.SYSTEM;
         dispatch(updateEditingMessage(conversation.id, content, sender));
 
-        // If updating a user message, retrigger the LLM response
         if (sender === EChatUserType.USER) {
-          // Create updated conversations array with the new user message content
           const updatedConversations = state.conversations.map(conv => {
             if (conv.id === conversation.id) {
               return {
@@ -163,8 +252,6 @@ export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
             }
             return conv;
           });
-
-          // Use setTimeout to ensure state update completes first
           setTimeout(() => {
             streamLLMResponse(conversation.id, updatedConversations);
           }, 100);
@@ -190,17 +277,17 @@ export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
       dispatch(setError(null));
 
       try {
-        // Check if this is the first message and update tab title
+        // Create a new AbortController for this request
+        abortControllerRef.current = new AbortController();
+
         const isFirstMessage = state.conversations.length === 0;
         if (isFirstMessage && chatId) {
           const chatTitle = extractChatTitle(trimmedContent);
           updateChatTabLabel(chatId, chatTitle);
         }
 
-        // Create a new conversation ID
         const conversationId = generateId();
 
-        // Create user message
         const userMessage: Message = generateUser({
           id: generateId(),
           content: trimmedContent,
@@ -208,7 +295,6 @@ export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
           timestamp: new Date(),
         });
 
-        // Create empty LLM message for streaming
         const llmMessage: Message = generateUser({
           id: generateId(),
           content: '',
@@ -216,7 +302,6 @@ export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
           timestamp: new Date(),
         });
 
-        // Create conversation pair
         const newConversation: ConversationPair = {
           id: conversationId,
           user: userMessage,
@@ -224,17 +309,12 @@ export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
           timestamp: new Date(),
         };
 
-        // Add the conversation
         dispatch(addConversation(newConversation));
-
-        // Clear the current message input immediately
         handleClearCurrentMessage();
 
-        // Stop loading and start streaming
         dispatch(setLoading(false));
         dispatch(setStreaming(true));
 
-        // Build messages array for API call from all conversations
         const messages: Array<{
           role: EChatUserType;
           content: string;
@@ -245,7 +325,6 @@ export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
           },
         ];
 
-        // Add conversation history from current state
         state.conversations.forEach(conversation => {
           if (conversation.user?.content) {
             messages.push({
@@ -261,19 +340,27 @@ export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
           }
         });
 
-        // Add the current user message
         messages.push({ role: EChatUserType.USER, content: trimmedContent });
 
-        const stream = await client.chat.completions.create({
-          model: 'gpt-4o',
-          stream: true,
-          messages,
-        });
+        const stream = await client.chat.completions.create(
+          {
+            model: 'gpt-4o',
+            stream: true,
+            messages,
+          },
+          {
+            signal: abortControllerRef.current.signal,
+          }
+        );
 
         let streamedContent = '';
 
-        // Process streaming response
         for await (const chunk of stream) {
+          // Check if the request was cancelled
+          if (abortControllerRef.current?.signal.aborted) {
+            break;
+          }
+
           const delta = chunk.choices[0]?.delta?.content;
           if (delta) {
             streamedContent += delta;
@@ -281,12 +368,22 @@ export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
           }
         }
 
-        dispatch(setStreaming(false));
+        // Only set streaming to false if not aborted
+        if (!abortControllerRef.current?.signal.aborted) {
+          dispatch(setStreaming(false));
+          abortControllerRef.current = null;
+        }
       } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : 'Failed to send message';
-        dispatch(setError(errorMessage));
+        // Check if error is due to cancellation
+        if (err instanceof Error && err.name === 'AbortError') {
+          dispatch(setError('Response generation was cancelled'));
+        } else {
+          const errorMessage =
+            err instanceof Error ? err.message : 'Failed to send message';
+          dispatch(setError(errorMessage));
+        }
         dispatch(setStreaming(false));
+        abortControllerRef.current = null;
       } finally {
         dispatch(setLoading(false));
       }
@@ -304,9 +401,18 @@ export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
     dispatch(setEditingMessageId(id));
   }, []);
 
-  const handleClearMessages = useCallback(() => {
+  const handleClearMessages = useCallback(async () => {
     dispatch(clearMessages());
-  }, []);
+
+    // Also clear from IndexedDB if chatId exists
+    if (chatId && chatStorage.isSupported()) {
+      try {
+        await chatStorage.deleteChat(chatId);
+      } catch (error) {
+        console.error('Failed to clear chat from IndexedDB:', error);
+      }
+    }
+  }, [chatId]);
 
   const contextValue: ChatContextType = {
     conversations: state.conversations,
@@ -322,6 +428,7 @@ export const ChatProvider = ({ children, chatId }: ChatProviderProps) => {
     handleClearCurrentMessage,
     handleSetEditingMessageId,
     handleUpdateEditingMessage,
+    handleCancelStreaming,
   };
 
   return (

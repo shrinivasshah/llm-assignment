@@ -15,6 +15,9 @@ const TiptapContainer = (_props: TiptapContainerProps) => {
     handleSendMessage,
     handleUpdateEditingMessage,
     editingMessageId,
+    isStreaming,
+    isLoading,
+    handleCancelStreaming,
   } = useChatContext();
   const editorRef = useRef<WysiwygEditorRef>(null);
 
@@ -41,6 +44,9 @@ const TiptapContainer = (_props: TiptapContainerProps) => {
       value={currentMessage}
       onChange={handleSetCurrentMessage}
       handleSend={handleSend}
+      isStreaming={isStreaming}
+      isLoading={isLoading}
+      handleStopStreaming={handleCancelStreaming}
     />
   );
 };

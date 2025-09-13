@@ -29,7 +29,6 @@ const updateConversationMessage = (
       ) {
         updatedConversation.system = { ...updatedConversation.system, content };
       } else if (!sender && updatedConversation.system) {
-        // Default to updating LLM message for streaming
         updatedConversation.system = { ...updatedConversation.system, content };
       }
 
