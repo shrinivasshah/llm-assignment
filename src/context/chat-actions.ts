@@ -1,19 +1,43 @@
 import { ChatActionType } from './enums';
-import type { ChatAction, ConversationPair } from './types';
+import type { ChatAction, ConversationPair, TabConversations } from './types';
 import type { EChatUserType } from './enums';
 
+// TABS
+export const setTabs = (tabs: TabConversations): ChatAction => ({
+  type: ChatActionType.SET_TABS,
+  payload: tabs,
+});
+
+export const createTab = (tabId: string): ChatAction => ({
+  type: ChatActionType.CREATE_TAB,
+  payload: tabId,
+});
+
+export const removeTab = (tabId: string): ChatAction => ({
+  type: ChatActionType.REMOVE_TAB,
+  payload: tabId,
+});
+
+export const setActiveTab = (tabId: string): ChatAction => ({
+  type: ChatActionType.SET_ACTIVE_TAB,
+  payload: tabId,
+});
+
+// CONVERSATIONS
 export const setConversations = (
+  tabId: string,
   conversations: ConversationPair[]
 ): ChatAction => ({
   type: ChatActionType.SET_CONVERSATIONS,
-  payload: conversations,
+  payload: { tabId, conversations },
 });
 
 export const addConversation = (
+  tabId: string,
   conversation: ConversationPair
 ): ChatAction => ({
   type: ChatActionType.ADD_CONVERSATION,
-  payload: conversation,
+  payload: { tabId, conversation },
 });
 
 export const setCurrentMessage = (message: string): ChatAction => ({
@@ -36,11 +60,12 @@ export const setStreaming = (isStreaming: boolean): ChatAction => ({
 });
 
 export const updateStreamingMessage = (
+  tabId: string,
   conversationId: string,
   content: string
 ): ChatAction => ({
   type: ChatActionType.UPDATE_STREAMING_MESSAGE,
-  payload: { conversationId, content },
+  payload: { tabId, conversationId, content },
 });
 
 export const setError = (error: string | null): ChatAction => ({
@@ -48,8 +73,9 @@ export const setError = (error: string | null): ChatAction => ({
   payload: error,
 });
 
-export const clearMessages = (): ChatAction => ({
+export const clearMessages = (tabId?: string): ChatAction => ({
   type: ChatActionType.CLEAR_MESSAGES,
+  payload: tabId,
 });
 
 export const setEditingMessageId = (id: string | null): ChatAction => ({
@@ -58,10 +84,11 @@ export const setEditingMessageId = (id: string | null): ChatAction => ({
 });
 
 export const updateEditingMessage = (
+  tabId: string,
   conversationId: string,
   content: string,
   sender: EChatUserType
 ): ChatAction => ({
   type: ChatActionType.UPDATE_EDITING_MESSAGE,
-  payload: { conversationId, content, sender },
+  payload: { tabId, conversationId, content, sender },
 });

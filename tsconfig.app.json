@@ -27,7 +27,10 @@
       "@hooks/*": ["./src/hooks/*"],
       "@enums/*": ["./src/enums/*"],
       "@layout/*": ["./src/layout/*"],
-      "@loaders/*": ["./src/loaders/*"]
+      "@loaders/*": ["./src/loaders/*"],
+      "@design-system/*": ["./src/design-system/*"],
+      "@routes/*": ["./src/routes/*"],
+      "@error-boundary/*": ["./src/error-boundary/*"]
     },
 
     /* Linting */

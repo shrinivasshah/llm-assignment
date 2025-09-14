@@ -1,15 +1,16 @@
 import { useNavigate } from 'react-router';
-import { useChatTabsContext } from '@/context/chat-tabs-context';
+import { useChatContext } from '@/context/chat-context';
 
 export const useNavigateToNewChat = () => {
   const navigate = useNavigate();
-  const { addChatTab } = useChatTabsContext();
+  const { handleCreateTab, handleSetActiveTab } = useChatContext();
 
-  const navigateToNewChat = (label?: string) => {
-    const chatId = crypto.randomUUID();
-    addChatTab(chatId, label);
-    void navigate(`/${chatId}`);
-    return chatId;
+  const navigateToNewChat = (_label?: string) => {
+    const tabId = `tab-${Date.now()}`;
+    handleCreateTab(tabId);
+    handleSetActiveTab(tabId);
+    void navigate(`/${tabId}`);
+    return tabId;
   };
 
   return navigateToNewChat;

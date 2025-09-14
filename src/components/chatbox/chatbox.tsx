@@ -5,6 +5,7 @@ import LoadingMessage from './loading-message';
 import classNames from 'classnames';
 import { useContext, useEffect, useRef } from 'react';
 import ChatContext from '@/context/chat-context';
+import { identifySender } from '@/helpers/chat';
 
 type ChatboxComponentProps = {
   conversations?: ChatboxProps['conversations'];
@@ -24,6 +25,8 @@ const Chatbox = ({ conversations = [] }: ChatboxComponentProps) => {
     }
     return msgs;
   });
+
+  const lastSystemMessageIndex = identifySender(messages);
 
   const getUserQuery = () => {
     if (isLoading && currentMessage) {
@@ -50,7 +53,7 @@ const Chatbox = ({ conversations = [] }: ChatboxComponentProps) => {
     <div
       ref={chatboxRef}
       className={classNames(
-        'flex-1 h-full w-full rounded-lg overflow-hidden p-0.5 sm:p-0.8 md:p-4 space-y-4 scroll-smooth min-w-0',
+        'flex-1 h-full w-full rounded-lg overflow-hidden p-2.4 lg:p-4 space-y-4 scroll-smooth min-w-0',
         'overflow-y-auto overflow-x-hidden',
         'scrollbar-thin scrollbar-thumb-blue-25 scrollbar-track-transparent',
         {
@@ -65,8 +68,12 @@ const Chatbox = ({ conversations = [] }: ChatboxComponentProps) => {
         <ChatEmptyState />
       ) : (
         <>
-          {messages.map(message => (
-            <ChatMessage key={message.id} message={message} />
+          {messages.map((message, index) => (
+            <ChatMessage
+              key={message.id}
+              message={message}
+              isLastSystemMessage={index === lastSystemMessageIndex}
+            />
           ))}
           {isLoading && !isStreaming && <LoadingMessage query={userQuery} />}
         </>

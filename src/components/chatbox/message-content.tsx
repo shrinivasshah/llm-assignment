@@ -7,11 +7,16 @@ import type { Message } from '@/context/types';
 import { editIcon } from '@/assets/svgs/chat-icons';
 import ChatContext from '@/context/chat-context';
 import { useContext } from 'react';
+
 type MessageContentProps = {
   message: Message;
+  isStreamingMessage?: boolean;
 };
 
-const MessageContent = ({ message }: MessageContentProps) => {
+const MessageContent = ({
+  message,
+  isStreamingMessage = false,
+}: MessageContentProps) => {
   const {
     handleSetEditingMessageId,
     isStreaming,
@@ -30,6 +35,7 @@ const MessageContent = ({ message }: MessageContentProps) => {
     <div
       className={classNames(
         'text-gray-900',
+        isStreamingMessage && isStreaming && 'animate-stream-fade',
         isUser && [
           'flex flex-col items-start p-1.5 sm:p-2 gap-3 sm:gap-5',
           'bg-blue-25',
@@ -44,7 +50,13 @@ const MessageContent = ({ message }: MessageContentProps) => {
       )}
     >
       {message.sender === EChatUserType.SYSTEM ? (
-        <div className='prose prose-sm sm:prose-lg max-w-none overflow-hidden break-words'>
+        <div
+          className={classNames(
+            'prose prose-sm sm:prose-lg max-w-none overflow-hidden break-words',
+            // Apply streaming animation to system messages
+            isStreamingMessage && isStreaming && 'animate-stream-fade'
+          )}
+        >
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={markdownComponents}

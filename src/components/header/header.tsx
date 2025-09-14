@@ -1,17 +1,19 @@
 import HeaderMenuButton from '@/design-system/header-menu-button';
 import useScreenSize from '@/hooks/useScreenSize';
-import { useSidenavContext } from '@/context/sidenav-context';
 
-type HeaderProps = {};
+type HeaderProps = {
+  onToggleSidenav?: () => void;
+};
 
-const Header = (_props: HeaderProps) => {
+const Header = ({ onToggleSidenav }: HeaderProps) => {
   const { isTablet, isMobile } = useScreenSize();
-  const { toggleSidenav } = useSidenavContext();
 
   return (
-    <header className='lg:h-4 h-6 w-full flex items-center justify-between gap-1.2'>
+    <header className='lg:h-4 h-6 w-full flex items-center justify-between gap-1.2 p-1.2 md:p-0'>
       <div className='lg:basis-[20%] flex items-center gap-1'>
-        {(isTablet || isMobile) && <HeaderMenuButton onClick={toggleSidenav} />}
+        {(isTablet || isMobile) && onToggleSidenav && (
+          <HeaderMenuButton onClick={onToggleSidenav} />
+        )}
         <img
           className='lg:w-[195.67px] lg:h-[33.13px] w-[15rem] lg:pb-1'
           fetchPriority='high'

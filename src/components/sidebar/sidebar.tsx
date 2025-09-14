@@ -2,63 +2,57 @@ import SidebarBackButton from '@/design-system/sidebar-back-button';
 import SidebarTabs from './tabs';
 import SidebarFooter from './footer';
 import { useLocation, useNavigate } from 'react-router';
-import { useChatTabsContext } from '@/context/chat-tabs-context';
-import { useStoredChats } from '@/hooks/useStoredChats';
+import { useChatContext } from '@/context/chat-context';
+import type { SidebarTabType } from './types';
 
 type SidebarProps = {};
 
 const Sidebar = (_props: SidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { tabs, isLoaded, removeChatTab } = useChatTabsContext();
-  const { deleteChat } = useStoredChats();
+  const { getTabIds, activeTabId, handleSetActiveTab, handleRemoveTab } =
+    useChatContext();
+
+  const tabIds = getTabIds();
 
   const getActiveTabId = () => {
     if (location.pathname === '/') {
       return 'home';
     }
-
-    const activeTab = tabs.find(tab => tab.path === location.pathname);
-    return activeTab?.id || 'home';
+    return activeTabId || 'home';
   };
 
   const handleTabSelect = (tabId: string) => {
-    const selectedTab = tabs.find(tab => tab.id === tabId);
-    if (selectedTab) {
-      navigate(selectedTab.path);
+    if (tabId === 'home') {
+      navigate('/');
+    } else {
+      handleSetActiveTab(tabId);
+      navigate(`/${tabId}`);
     }
   };
 
   const handleTabRemove = async (tabId: string) => {
-    // Extract chatId from tabId (format: 'chat-{chatId}')
-    if (tabId.startsWith('chat-')) {
-      const chatId = tabId.substring(5); // Remove 'chat-' prefix
-
-      try {
-        // Delete from storage
-        await deleteChat(chatId);
-
-        // Remove from tabs
-        removeChatTab(chatId);
-
-        // Navigate to home if the deleted chat was active
-        const activeTabId = getActiveTabId();
-        if (activeTabId === tabId) {
-          navigate('/');
-        }
-      } catch (error) {
-        console.error('Failed to delete chat:', error);
+    try {
+      const wasActiveTab = activeTabId === tabId;
+      if (wasActiveTab) {
+        navigate('/');
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
+
+      handleRemoveTab(tabId);
+    } catch (error) {
+      console.error('Failed to delete tab:', error);
     }
   };
 
-  if (!isLoaded) {
-    return (
-      <div className='h-full flex items-center justify-center'>
-        <div className='text-sm text-gray-500'>Loading...</div>
-      </div>
-    );
-  }
+  const tabsData = [
+    { id: 'home', label: 'Home', type: 'home' as SidebarTabType },
+    ...tabIds.map(tabId => ({
+      id: tabId,
+      label: `Chat ${tabId.slice(-8)}`,
+      type: 'chat' as SidebarTabType,
+    })),
+  ];
 
   return (
     <div className='h-full flex flex-col gap-0.8 overflow-hidden'>
@@ -68,11 +62,7 @@ const Sidebar = (_props: SidebarProps) => {
 
           <div className='flex-1 min-h-0 overflow-y-auto'>
             <SidebarTabs
-              data={tabs.map(tab => ({
-                id: tab.id,
-                label: tab.label,
-                type: tab.type,
-              }))}
+              data={tabsData}
               selectedTabId={getActiveTabId()}
               onTabSelect={handleTabSelect}
               onTabRemove={handleTabRemove}

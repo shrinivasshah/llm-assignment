@@ -170,6 +170,7 @@ export default {
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
         'slide-up': 'slideUp 0.3s ease-out',
+        'stream-fade': 'streamFade 0.3s ease-out',
       },
 
       keyframes: {
@@ -180,6 +181,10 @@ export default {
         slideUp: {
           '0%': { transform: 'translateY(1rem)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        streamFade: {
+          '0%': { opacity: '0', transform: 'translateY(0.5rem)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
         },
       },
     },

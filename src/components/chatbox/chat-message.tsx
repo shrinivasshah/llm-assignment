@@ -5,10 +5,15 @@ import type { Message } from '@/context/types';
 
 type ChatMessageProps = {
   message: Message;
+  isLastSystemMessage?: boolean;
 };
 
-const ChatMessage = ({ message }: ChatMessageProps) => {
+const ChatMessage = ({
+  message,
+  isLastSystemMessage = false,
+}: ChatMessageProps) => {
   const isUser = message.sender === 'user';
+  const isStreamingMessage = isLastSystemMessage && message.sender === 'system';
 
   return (
     <div
@@ -24,7 +29,10 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
         <MessageContent message={message} />
       ) : (
         <div className='min-w-0 flex-1'>
-          <MessageContent message={message} />
+          <MessageContent
+            message={message}
+            isStreamingMessage={isStreamingMessage}
+          />
         </div>
       )}
     </div>

@@ -59,11 +59,11 @@ export const useScreenSize = (): ScreenSizeHook => {
   return {
     width,
     height,
-    isMobile: width < BREAKPOINTS.sm, // < 640px
-    isTablet: width >= BREAKPOINTS.sm && width < BREAKPOINTS.lg, // 640px - 1023px
-    isDesktop: width >= BREAKPOINTS.lg && width < BREAKPOINTS.xl, // 1024px - 1279px
-    isLargeDesktop: width >= BREAKPOINTS.xl, // >= 1280px
-    isIPadOrLess: width < BREAKPOINTS.lg, // < 1024px (iPad and smaller)
+    isMobile: width < BREAKPOINTS.sm,
+    isTablet: width >= BREAKPOINTS.sm && width < BREAKPOINTS.lg,
+    isDesktop: width >= BREAKPOINTS.lg && width < BREAKPOINTS.xl,
+    isLargeDesktop: width >= BREAKPOINTS.xl,
+    isIPadOrLess: width < BREAKPOINTS.lg,
     breakpoint,
   };
 };

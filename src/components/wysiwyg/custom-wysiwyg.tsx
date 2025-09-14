@@ -34,7 +34,7 @@ const TiptapContainer = (_props: TiptapContainerProps) => {
     if (currentMessage.trim() && !editingMessageId) {
       await handleSendMessage(currentMessage);
     } else if (editingMessageId) {
-      handleUpdateEditingMessage(editingMessageId, currentMessage);
+      await handleUpdateEditingMessage(editingMessageId, currentMessage);
     }
   };
 

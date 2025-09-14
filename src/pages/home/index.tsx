@@ -10,7 +10,9 @@ const Home = () => {
   return (
     <div className='h-full flex flex-col items-center justify-center p-8'>
       <div className='text-center space-y-6'>
-        <h1 className='text-4xl font-bold text-white mb-4'>Welcome to Chat</h1>
+        <h1 className='text-4xl font-bold text-white mb-4'>
+          Welcome to Tracker chatChat
+        </h1>
         <p className='text-gray-300 text-lg mb-8'>
           Start a new conversation with our AI assistant
         </p>

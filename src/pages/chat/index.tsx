@@ -1,30 +1,28 @@
 import { useEffect } from 'react';
-import { useLoaderData } from 'react-router';
+import { useParams, useNavigate } from 'react-router';
 import Chat from '@/components/chat/chat';
-import { ChatProvider } from '@/context/chat-context';
-import { useChatTabsContext } from '@/context/chat-tabs-context';
-import type { ChatLoaderData } from '@/loaders/chatLoader';
+import { useChatContext } from '@/context/chat-context';
 
 const ChatPage = () => {
-  const { chatId, storedChat } = useLoaderData() as ChatLoaderData;
-  const { addChatTab, getChatTab } = useChatTabsContext();
+  const { tabId } = useParams<{ tabId: string }>();
+  const navigate = useNavigate();
+  const { handleCreateTab, handleSetActiveTab, getTabIds } = useChatContext();
 
   useEffect(() => {
-    const existingTab = getChatTab(chatId);
-    if (!existingTab) {
-      if (storedChat && storedChat.title && storedChat.title !== 'New Chat') {
-        addChatTab(chatId, storedChat.title);
-      } else {
-        addChatTab(chatId);
+    if (tabId) {
+      const existingTabIds = getTabIds();
+      if (!existingTabIds.includes(tabId)) {
+        if (existingTabIds.length === 0) {
+          navigate('/', { replace: true });
+          return;
+        }
+        handleCreateTab(tabId);
       }
+      handleSetActiveTab(tabId);
     }
-  }, [chatId, storedChat, addChatTab, getChatTab]);
+  }, [tabId, handleCreateTab, handleSetActiveTab, getTabIds, navigate]);
 
-  return (
-    <ChatProvider chatId={chatId}>
-      <Chat />
-    </ChatProvider>
-  );
+  return <Chat />;
 };
 
 export default ChatPage;

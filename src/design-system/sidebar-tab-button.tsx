@@ -57,7 +57,7 @@ const SidebarTabButton = ({
         <button
           type='button'
           className={classNames(
-            'absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded hover:bg-gray-200 transition-opacity',
+            'absolute right-1 top-1/2 transform -translate-y-1/2 p-1 rounded hover:bg-gray-200 transition-opacity',
             {
               'opacity-0 group-hover:opacity-100': !isDeleting,
               'opacity-50 cursor-not-allowed': isDeleting,

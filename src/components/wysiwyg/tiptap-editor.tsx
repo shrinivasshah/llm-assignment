@@ -191,7 +191,7 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(
 
     const getContainerClasses = useCallback(() => {
       return classNames(
-        'relative rounded-lg bg-white overflow-hidden w-full flex flex-col max-h-full',
+        'relative md:rounded-lg rounded-t-lg bg-white overflow-hidden w-full flex flex-col max-h-full',
         className
       );
     }, [className]);
