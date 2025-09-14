@@ -32,6 +32,7 @@ import {
 import { client, getConfigurationError } from '@/utils/openai';
 import { SYSTEM_PROMPT } from '@/constants/openai';
 import { getErrorMessage } from '@/helpers/errors';
+import { createConfigurationErrorConversation } from '@/helpers/openai';
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
@@ -89,7 +90,18 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
 
       const configError = getConfigurationError();
       if (configError) {
-        dispatch(setError(configError));
+        const targetTabId = tabId || state.activeTabId;
+        if (!targetTabId) {
+          const defaultTabId = `tab-${Date.now()}`;
+          dispatch(createTab(defaultTabId));
+          dispatch(setActiveTab(defaultTabId));
+          return handleSendMessage(content, defaultTabId);
+        }
+
+        const conversationPair = createConfigurationErrorConversation(content);
+        dispatch(addConversation(targetTabId, conversationPair));
+        dispatch(clearCurrentMessage());
+        dispatch(setError(null));
         return;
       }
 
@@ -248,10 +260,12 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         dispatch(clearCurrentMessage());
 
         if (isUserMessage && content.trim()) {
-          // Check for configuration errors first
           const configError = getConfigurationError();
           if (configError) {
-            dispatch(setError(configError));
+            const errorConversationPair =
+              createConfigurationErrorConversation(content);
+            dispatch(addConversation(targetTabId, errorConversationPair));
+            dispatch(setError(null));
             return;
           }
 
