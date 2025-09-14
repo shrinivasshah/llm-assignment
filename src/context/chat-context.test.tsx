@@ -22,6 +22,8 @@ vi.mock('@/utils/openai', () => ({
       },
     },
   },
+  getConfigurationError: vi.fn().mockReturnValue(null),
+  isConfigured: vi.fn().mockReturnValue(true),
 }));
 
 const mockAbort = vi.fn();
