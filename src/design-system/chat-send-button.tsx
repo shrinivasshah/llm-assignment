@@ -38,7 +38,7 @@ const ChatSendButton = ({
       )}
     >
       {isStreaming ? (
-        <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1.6 h-1.6 bg-blue-600 hover:bg-red-600 rounded animate-pulse transition-colors duration-200'></div>
+        <div className='absolute cursor-pointer top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1.6 h-1.6 bg-blue-600 hover:bg-red-600 rounded animate-pulse transition-colors duration-200'></div>
       ) : (
         <p
           className={classNames({

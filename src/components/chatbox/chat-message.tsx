@@ -18,7 +18,7 @@ const ChatMessage = ({
   return (
     <div
       className={classNames(
-        'flex items-start min-w-0 max-w-full',
+        'flex items-start min-w-0 max-w-full pt-1.2',
         isUser
           ? 'flex-row-reverse space-x-reverse gap-1 sm:gap-2 justify-start'
           : 'flex-row gap-1 sm:gap-2'

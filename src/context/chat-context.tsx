@@ -105,7 +105,6 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
           timestamp: new Date(),
         };
 
-        // Create the conversation pair with empty system message first
         const conversationId = `conv-${Date.now()}`;
         const systemMessage: Message = {
           id: `system-${Date.now()}`,
@@ -121,12 +120,11 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
           timestamp: new Date(),
         };
 
-        // Add the conversation with empty system message to the specific tab
         dispatch(addConversation(targetTabId, conversationPair));
+        dispatch(clearCurrentMessage());
         dispatch(setLoading(false));
         dispatch(setStreaming(true));
 
-        // Create abort controller for this request
         abortControllerRef.current = new AbortController();
 
         const completion = await client.chat.completions.create(
@@ -145,7 +143,6 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
 
         let accumulatedContent = '';
 
-        // Process the stream
         for await (const chunk of completion) {
           if (abortControllerRef.current?.signal.aborted) {
             break;
@@ -165,11 +162,9 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         }
 
         dispatch(setStreaming(false));
-        dispatch(clearCurrentMessage());
         abortControllerRef.current = null;
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
-          // Request was cancelled, don't show error
           dispatch(setStreaming(false));
         } else {
           dispatch(
@@ -196,7 +191,6 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     (conversation: Omit<ConversationPair, 'timestamp'>, tabId?: string) => {
       const targetTabId = tabId || state.activeTabId;
       if (!targetTabId) {
-        // Create a default tab if none exists
         const defaultTabId = `tab-${Date.now()}`;
         dispatch(createTab(defaultTabId));
         dispatch(setActiveTab(defaultTabId));

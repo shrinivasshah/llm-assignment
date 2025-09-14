@@ -99,6 +99,8 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(
       },
     });
 
+    const isSendDisabled = editor.isEmpty && !isStreaming;
+
     const handleImageUpload = useCallback(() => {
       if (imageInputRef.current) {
         imageInputRef.current.click();
@@ -303,7 +305,7 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(
               title='Send'
               isStreaming={isStreaming || isLoading}
               handleStopStreaming={handleStopStreaming}
-              disabled={editor.isEmpty && attachedFiles.length === 0}
+              disabled={isSendDisabled}
             />
           </div>
         </div>
