@@ -131,7 +131,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
 
         const completion = await client.chat.completions.create(
           {
-            model: 'gpt-4o-mini',
+            model: import.meta.env.VITE_OPENAI_MODEL,
             stream: true,
             messages: [
               { role: 'system', content: SYSTEM_PROMPT },
@@ -292,7 +292,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
 
             const completion = await client.chat.completions.create(
               {
-                model: 'gpt-4o-mini',
+                model: import.meta.env.VITE_OPENAI_MODEL,
                 stream: true,
                 messages,
               },

@@ -47,9 +47,9 @@ const Sidebar = (_props: SidebarProps) => {
 
   const tabsData = [
     { id: 'home', label: 'Home', type: 'home' as SidebarTabType },
-    ...tabIds.map(tabId => ({
+    ...tabIds.map((tabId, index) => ({
       id: tabId,
-      label: `Chat ${tabId.slice(-8)}`,
+      label: `Chat #${index + 1}`,
       type: 'chat' as SidebarTabType,
     })),
   ];

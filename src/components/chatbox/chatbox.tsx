@@ -2,6 +2,7 @@ import type { ChatboxProps } from '@/context/types';
 import ChatEmptyState from './chat-empty-state';
 import ChatMessage from './chat-message';
 import LoadingMessage from './loading-message';
+import WaveAnimation from '@/design-system/wave-animation';
 import classNames from 'classnames';
 import { useContext, useEffect, useRef } from 'react';
 import ChatContext from '@/context/chat-context';
@@ -53,19 +54,26 @@ const Chatbox = ({ conversations = [] }: ChatboxComponentProps) => {
     <div
       ref={chatboxRef}
       className={classNames(
-        'flex-1 h-full w-full rounded-lg overflow-hidden p-2.4 lg:p-4 space-y-4 scroll-smooth min-w-0',
-        'overflow-y-auto overflow-x-hidden',
-        'scrollbar-thin scrollbar-thumb-blue-25 scrollbar-track-transparent',
+        'flex-1 h-full w-full rounded-lg overflow-hidden p-2.4 lg:p-4 scroll-smooth min-w-0 relative',
+        {
+          'overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-blue-25 scrollbar-track-transparent':
+            messages.length > 0 || isLoading || isStreaming,
+          'overflow-hidden':
+            messages.length === 0 && !isLoading && !isStreaming,
+        },
         {
           'lg:bg-white lg:backdrop-blur-none backdrop-blur-md bg-white/20':
             messages.length > 0 || isLoading || isStreaming,
-          'backdrop-blur-md bg-white/20':
+          'backdrop-blur-md bg-white/20 group':
             messages.length === 0 && !isLoading && !isStreaming,
         }
       )}
     >
+      {messages.length === 0 && !isLoading && !isStreaming && <WaveAnimation />}
       {messages.length === 0 && !isLoading && !isStreaming ? (
-        <ChatEmptyState />
+        <div className='relative z-10 h-full flex items-center justify-center'>
+          <ChatEmptyState />
+        </div>
       ) : (
         <>
           {messages.map((message, index) => (

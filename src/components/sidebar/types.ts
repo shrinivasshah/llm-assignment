@@ -1,8 +1,8 @@
 export type SidebarTabType = 'home' | 'chat';
 
-export interface SidebarTab {
+export type SidebarTab = {
   id: string;
   label: string;
   type: SidebarTabType;
   path: string;
-}
+};
