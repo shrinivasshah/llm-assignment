@@ -29,8 +29,9 @@ import {
   updateEditingMessage,
   updateStreamingMessage,
 } from './chat-actions';
-import { client } from '@/utils/openai';
+import { client, getConfigurationError } from '@/utils/openai';
 import { SYSTEM_PROMPT } from '@/constants/openai';
+import { getErrorMessage } from '@/helpers/errors';
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
@@ -85,6 +86,12 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
   const handleSendMessage = useCallback(
     async (content: string, tabId?: string): Promise<void> => {
       if (!content.trim()) return;
+
+      const configError = getConfigurationError();
+      if (configError) {
+        dispatch(setError(configError));
+        return;
+      }
 
       const targetTabId = tabId || state.activeTabId;
       if (!targetTabId) {
@@ -167,11 +174,8 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         if (error instanceof Error && error.name === 'AbortError') {
           dispatch(setStreaming(false));
         } else {
-          dispatch(
-            setError(
-              error instanceof Error ? error.message : 'An error occurred'
-            )
-          );
+          const errorMessage = getErrorMessage(error);
+          dispatch(setError(errorMessage));
           dispatch(setStreaming(false));
         }
         dispatch(setLoading(false));
@@ -244,6 +248,13 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         dispatch(clearCurrentMessage());
 
         if (isUserMessage && content.trim()) {
+          // Check for configuration errors first
+          const configError = getConfigurationError();
+          if (configError) {
+            dispatch(setError(configError));
+            return;
+          }
+
           dispatch(setLoading(true));
           dispatch(setError(null));
 
@@ -320,13 +331,8 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
             if (error instanceof Error && error.name === 'AbortError') {
               dispatch(setStreaming(false));
             } else {
-              dispatch(
-                setError(
-                  error instanceof Error
-                    ? error.message
-                    : 'An error occurred while regenerating response'
-                )
-              );
+              const errorMessage = getErrorMessage(error);
+              dispatch(setError(errorMessage));
               dispatch(setStreaming(false));
             }
             dispatch(setLoading(false));
