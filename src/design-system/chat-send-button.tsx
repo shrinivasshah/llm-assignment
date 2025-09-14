@@ -1,17 +1,19 @@
 import { sendIcon } from '@/assets/svgs/chat-icons';
 import classNames from 'classnames';
 
-type Props = {
+type ChatSendButtonProps = {
   isStreaming?: boolean;
   title?: string;
   handleStopStreaming?: () => void;
+  disabled?: boolean;
 };
 
 const ChatSendButton = ({
   isStreaming = false,
   title = 'Send',
   handleStopStreaming,
-}: Props) => {
+  disabled = false,
+}: ChatSendButtonProps) => {
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (isStreaming && handleStopStreaming) {
       e.preventDefault();
@@ -22,6 +24,8 @@ const ChatSendButton = ({
   return (
     <button
       type='submit'
+      aria-label='Send Message'
+      disabled={disabled}
       onClick={handleClick}
       className={classNames(
         'flex items-center rounded-lg justify-center px-1.2 py-0.8 text-base gap-0.4 relative overflow-hidden transition-colors duration-200',
@@ -29,6 +33,7 @@ const ChatSendButton = ({
           'bg-blue-50 hover:bg-red-50': isStreaming,
           'bg-blue-600': !isStreaming,
           'hover:bg-blue-700': !isStreaming,
+          'cursor-not-allowed opacity-50': disabled,
         }
       )}
     >

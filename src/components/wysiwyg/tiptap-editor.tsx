@@ -303,6 +303,7 @@ const WysiwygEditor = forwardRef<WysiwygEditorRef, WysiwygEditorProps>(
               title='Send'
               isStreaming={isStreaming || isLoading}
               handleStopStreaming={handleStopStreaming}
+              disabled={editor.isEmpty && attachedFiles.length === 0}
             />
           </div>
         </div>
