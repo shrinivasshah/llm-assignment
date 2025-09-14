@@ -6,12 +6,12 @@ type HeaderProps = {
 };
 
 const Header = ({ onToggleSidenav }: HeaderProps) => {
-  const { isTablet, isMobile } = useScreenSize();
+  const { isIPadOrLess } = useScreenSize();
 
   return (
     <header className='lg:h-4 h-6 w-full flex items-center justify-between gap-1.2 p-1.2 md:p-0'>
       <div className='lg:basis-[20%] flex items-center gap-1'>
-        {(isTablet || isMobile) && onToggleSidenav && (
+        {isIPadOrLess && onToggleSidenav && (
           <HeaderMenuButton onClick={onToggleSidenav} />
         )}
         <img
