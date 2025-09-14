@@ -20,6 +20,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@netlify/vite-plugin": "^2.5.9",
     "@tailwindcss/typography": "^0.5.16",
     "@tiptap/extension-emoji": "^3.4.2",
     "@tiptap/extension-image": "^3.4.2",
